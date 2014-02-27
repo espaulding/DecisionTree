@@ -128,15 +128,14 @@ decision_tree$ID3 = function(nodedata, dims){
 
     #identify branches leaving this node (1 for each discrete data value)
     root$decision   = as.vector(levels(as.factor(nodedata$data[,root$label])))
-    datarows        = 1:nrow(nodedata$data)
-    subsetRows      = sapply(root$decision, function(v) which(v==nodedata$data[,indexBestDim]))
 	
     #generate a new node(subtree or leaf) to attach for each branch
     root$branch = list()
     for(v in 1:length(root$decision)){
-    	subset = set$subset(nodedata, rowsToRemove=datarows[-subsetRows[[v]]], colsToRemove=indexBestDim)
-    	if(nrow(subset$data) != 0){ root$branch[[v]] = decision_tree$ID3(subset,dims[-indexBestDim]); }
-    	else { root$branch[[v]] = list(type="leaf",label="class",answer=root$common) }
+    	subset = set$subset(nodedata, rowsToRemove=which(root$decision[v]!=nodedata$data[,indexBestDim]),
+                                      colsToRemove=indexBestDim)
+        if(nrow(subset$data) != 0){ root$branch[[v]] = decision_tree$ID3(subset,dims[-indexBestDim]); }
+        else                      { root$branch[[v]] = list(type="leaf",label="class",answer=root$common) }
     }
     return(root)
 }
@@ -147,7 +146,7 @@ decision_tree$ID3 = function(nodedata, dims){
 decision_tree$entropy = function(c){
     entropybyclass = function(p){ 
         if(p == 0){ return(0) } 
-	return(-p*log2(p)) 
+        return(-p*log2(p)) 
     }
     e = sapply(levels(as.factor(c)), function(x) entropybyclass(length(which(c == x)) / length(c)))
     return(sum(e))
@@ -167,14 +166,11 @@ decision_tree$entropy = function(c){
 #   data  : this must be a matrix of data with samples as rows and dimensions(attributes) as columns
 #   class : this must be a vector with 1 entry for each row of the matrix denoting that sample's class
 decision_tree$infogain = function(nodedata,dim){
-    weight_entropy = function(nd,sr){ 
-        weight  = length(nd$class[sr])/nrow(nd$data)
-        entropy = decision_tree$entropy(nd$class[sr])
-        return(weight*entropy)
+    weight_entropy = function(sr){ 
+        weight  = length(nodedata$class[sr])/nrow(nodedata$data)
+        return(weight*decision_tree$entropy(nodedata$class[sr]))
     }
-    values        = levels(as.factor(nodedata$data[,dim])) #what are the discrete values for the dimension
-    subsetRows    = sapply(values, function(v) which(v==nodedata$data[,dim]))
-    upper_entropy = decision_tree$entropy(nodedata$class)
-    lower_entropy = sum(sapply(subsetRows, function(s) weight_entropy(nodedata,s)))
-    return(upper_entropy - lower_entropy)
+    values     = levels(as.factor(nodedata$data[,dim])) #what are the discrete values for the dimension
+    subsetRows = sapply(values, function(v) which(v==nodedata$data[,dim]))
+    return(decision_tree$entropy(nodedata$class) - sum(sapply(subsetRows, weight_entropy)))
 }
