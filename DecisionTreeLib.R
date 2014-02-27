@@ -25,11 +25,11 @@ set$csvtoset = function(csvData, dataColumns=NULL, classLabelColumn=NULL, classL
 set$subset = function(localset, rowsToRemove=NULL, colsToRemove=NULL){
     ss = localset
     if(!is.null(rowsToRemove)){ 
-	ss$data  = ss$data[-rowsToRemove,]
-	ss$class = ss$class[-rowsToRemove]
+	    ss$data  = ss$data[-rowsToRemove,]
+	    ss$class = ss$class[-rowsToRemove]
     }
     if(!is.null(colsToRemove)){ 
-	ss$data  = ss$data[,-colsToRemove]
+	    ss$data  = ss$data[,-colsToRemove]
     }
     return(ss)
 }
