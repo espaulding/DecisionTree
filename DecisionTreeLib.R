@@ -34,6 +34,28 @@ set$subset = function(localset, rowsToRemove=NULL, colsToRemove=NULL){
     return(ss)
 }
 
+#Discretize the data by some scale. i.e. on a scale from 1 to 10
+set$binsetdata = function(localset, numbins=10, max=NULL, min=NULL){
+    result = list(max=max, min=min)
+    if(is.null(max)){ max = apply(localset$data, 2, function(c) max(c)) }
+    if(is.null(min)){ min = apply(localset$data, 2, function(c) min(c)) }
+    binsize = sapply(c(1:ncol(localset$data)), function(d) (max[d]-min[d])/numbins)
+
+    d = dim(localset$data)
+    for(r in 1:d[1]){
+        for(c in 1:d[2]){
+            localset$data[r,c] = floor((localset$data[r,c] - min[c]) / binsize[c]) + 1
+            if(localset$data[r,c] > numbins){ localset$data[r,c] = numbins; }
+            if(localset$data[r,c] < 1)      { localset$data[r,c] = 1; }
+        }
+    }
+
+    result$max    = max
+    result$min    = min
+    result$newset = localset
+    return(result)
+}
+
 #Use a decision tree previously built to classify a set of test data
 #set       : Must be in the expected set format
 #set$data  : must contain a matrix of discrete values similiar to the values
@@ -114,14 +136,14 @@ decision_tree$ID3 = function(nodedata, dims){
     #base cases
     classes = levels(as.factor(nodedata$class))
     if(length(classes)==1 || length(dims)==0){ 
-    root$answer = root$common
-    return(root); 
+        root$answer = root$common
+        return(root); 
     }
 
     #main algorithm
     root$type="node"
     #find the dimension(attribute) with greatest information gain
-    infogainByDim   = sapply(c(1:length(dims)), function(d) decision_tree$infogain(nodedata,d))
+    infogainByDim   = sapply(1:length(dims), function(d) decision_tree$infogain(nodedata,d))
     indexBestDim    = order(infogainByDim, decreasing=TRUE)[1]
     root$label      = colnames(nodedata$data)[indexBestDim]
     root$dim        = dims[indexBestDim]
@@ -134,8 +156,9 @@ decision_tree$ID3 = function(nodedata, dims){
     for(v in 1:length(root$decision)){
         subset = set$subset(nodedata, rowsToRemove=which(root$decision[v]!=nodedata$data[,indexBestDim]),
                                       colsToRemove=indexBestDim)
-        if(nrow(subset$data) != 0){ root$branch[[v]] = decision_tree$ID3(subset,dims[-indexBestDim]); }
-        else                      { root$branch[[v]] = list(type="leaf",label="class",answer=root$common) }
+        d = dim(subset$data)[1] != 0
+        if(length(d) == 1 && d){ root$branch[[v]] = decision_tree$ID3(subset,dims[-indexBestDim]); }
+        else                   { root$branch[[v]] = list(type="leaf",label="class",answer=root$common) }
     }
     return(root)
 }
