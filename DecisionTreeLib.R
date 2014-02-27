@@ -13,10 +13,10 @@ set$csvtoset = function(csvData, dataColumns=NULL, classLabelColumn=NULL, classL
 
     classLabelColumn = which(colnames(csvData) == classLabelName)
     if(length(classLabelColumn) == 1){ #length of 0 or more than 1 indicates an unuseable index
-	dataColumns = 1:ncol(csvData)
-	dataColumns = dataColumns[-classLabelColumn]
-	newset$data=csvData[,dataColumns]
-	newset$class=csvData[,classLabelColumn]
+        dataColumns = 1:ncol(csvData)
+        dataColumns = dataColumns[-classLabelColumn]
+        newset$data=csvData[,dataColumns]
+        newset$class=csvData[,classLabelColumn]
     }
     return(newset)
 }
@@ -25,11 +25,11 @@ set$csvtoset = function(csvData, dataColumns=NULL, classLabelColumn=NULL, classL
 set$subset = function(localset, rowsToRemove=NULL, colsToRemove=NULL){
     ss = localset
     if(!is.null(rowsToRemove)){ 
-	    ss$data  = ss$data[-rowsToRemove,]
-	    ss$class = ss$class[-rowsToRemove]
+        ss$data  = ss$data[-rowsToRemove,]
+        ss$class = ss$class[-rowsToRemove]
     }
     if(!is.null(colsToRemove)){ 
-	    ss$data  = ss$data[,-colsToRemove]
+        ss$data  = ss$data[,-colsToRemove]
     }
     return(ss)
 }
@@ -68,7 +68,7 @@ decision_tree$classifyInstance = function(sample, tree, noanswer="vote"){
     answer = NULL
     node = tree
     while(is.null(answer)){
-    	if(node$type != "leaf"){
+        if(node$type != "leaf"){
             value       = as.numeric(sample[node$dim])
             branchindex = which(node$decision == value)
             if(length(branchindex) == 1){ #follow the branch
@@ -91,21 +91,21 @@ decision_tree$buildTree = function(train){
 
 #Iterative Dichotomizer 3 algorithm
 #ID3(S, attributes yet to be processed)
-#	Create a Root node for the tree
-#	Base cases
-#		If S are all same class, return the single node tree root with that label
-#		If attributes is empty return r node with label equal to most common class
-#	Otherwise
-#		Find attribute with greatest information gain
-#		Set decision attribute for root 
-#		For each value of the chosen attribute
-#			Add a new branch below root
-#			Determine Sv for that value
-#			If Sv is empty 
+#   Create a Root node for the tree
+#   Base cases
+#       If S are all same class, return the single node tree root with that label
+#       If attributes is empty return r node with label equal to most common class
+#   Otherwise
+#       Find attribute with greatest information gain
+#       Set decision attribute for root 
+#       For each value of the chosen attribute
+#           Add a new branch below root
+#           Determine Sv for that value
+#           If Sv is empty 
 #               #this adds nothing to the algorithm if classify(noanswer="vote")
-#				Add a leaf with label of most common class 
-#			Else
-#				Add subtree to this branch: ID3(Sv, attributes – this attribute)
+#               Add a leaf with label of most common class 
+#           Else
+#               Add subtree to this branch: ID3(Sv, attributes – this attribute)
 decision_tree$ID3 = function(nodedata, dims){
     root = list(type="leaf",label="class")
     counts = as.matrix(table(nodedata$class)) #count the number of set items from each class
@@ -114,8 +114,8 @@ decision_tree$ID3 = function(nodedata, dims){
     #base cases
     classes = levels(as.factor(nodedata$class))
     if(length(classes)==1 || length(dims)==0){ 
-	root$answer = root$common
-	return(root); 
+    root$answer = root$common
+    return(root); 
     }
 
     #main algorithm
@@ -128,11 +128,11 @@ decision_tree$ID3 = function(nodedata, dims){
 
     #identify branches leaving this node (1 for each discrete data value)
     root$decision   = as.vector(levels(as.factor(nodedata$data[,root$label])))
-	
+    
     #generate a new node(subtree or leaf) to attach for each branch
     root$branch = list()
     for(v in 1:length(root$decision)){
-    	subset = set$subset(nodedata, rowsToRemove=which(root$decision[v]!=nodedata$data[,indexBestDim]),
+        subset = set$subset(nodedata, rowsToRemove=which(root$decision[v]!=nodedata$data[,indexBestDim]),
                                       colsToRemove=indexBestDim)
         if(nrow(subset$data) != 0){ root$branch[[v]] = decision_tree$ID3(subset,dims[-indexBestDim]); }
         else                      { root$branch[[v]] = list(type="leaf",label="class",answer=root$common) }
