@@ -75,8 +75,8 @@ decision_tree$classifyInstance = function(sample, tree, noanswer="vote"){
                 node = node$branch[[branchindex]]
             } else { #no branch to follow for this sample
                 if(noanswer=="vote"){ answer = node$common; }
-                    else                { answer = "unclassifiable"; }
-                }
+                else                { answer = "unclassifiable"; }
+            }
         } else { #we're at a leaf node so collect its answer
             answer = node$answer
         }
