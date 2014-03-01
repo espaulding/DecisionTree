@@ -15,13 +15,43 @@ if(length(grep("linux",R.Version()$os)) ){
   windows <- function( ... ) X11( ... )
 }
 
-#Load the cancer data
-trainfile = "train.csv"
-testfile  = "test.csv"
-train     = set$csvtoset(read.csv(trainfile), classLabelName="class")
-test      = set$csvtoset(read.csv(testfile), classLabelName="class")
-tree      = decision_tree$buildTree(train)
+numbins = 5
 
+#Load the cancer data
+trainfile = "train.csv"; testfile  = "test.csv"; classlabel = "class"
+#trainfile = "fruit.csv" ;testfile  = "testFruit.csv"; classlabel = "Class"
+train     = set$csvtoset(read.csv(trainfile), classLabelName=classlabel)
+result    = set$binsetdata(train, numbins=numbins)
+train     = result$newset
+
+test      = set$csvtoset(read.csv(testfile), classLabelName=classlabel)
+test      = set$binsetdata(test, numbins=numbins, max=result$max, min=result$min)$newset
+
+print("building tree...")
+tree      = decision_tree$buildTree(train)
+print("built tree")
+
+print("")
+print("Tree hierarchy")
+print("Layer 0 of the tree")
+print(paste("The root node uses",tree$label,"and asks the following questions"))
+print(tree$decision)
+
+print("")
+print("Layer 1 of the tree")
+for(branch in 1:length(tree$decision)){
+    node = tree$branch[[branch]]
+    print(paste("The node coming from root branch",tree$decision[[branch]],"is a",node$type))
+    if(node$type=="leaf"){
+        print(paste("the leaf answers with class",node$answer))
+    } else {
+        print(paste("The node uses",node$label,"and asks the following questions"))
+        print(node$decision)
+    }
+    print("")
+}
+
+print(paste("The tree used data put into",numbins,"bins"))
 
 result    = decision_tree$classify(test,tree,noanswer="vote")
 print(paste("The accuracy on the test set from ",testfile," was ",round(result$accuracy,3)*100,"%",sep=""))
@@ -32,6 +62,20 @@ print(paste("The number of items that couldn't be classified was :",result$uncla
 print("")
 result    = decision_tree$classify(test,tree,noanswer="ignore")
 print(paste("The accuracy on the test set from ",testfile," was ",round(result$accuracy,3)*100,"%",sep=""))
+print(paste("The number of items correctly classified was        :",result$numcorrect))
+print(paste("The number of items incorrectly classified was      :",result$numwrong))
+print(paste("The number of items that couldn't be classified was :",result$unclassifiable))
+print("")
+print("")
+result    = decision_tree$classify(train,tree,noanswer="vote")
+print(paste("The accuracy on the test set from ",trainfile," was ",round(result$accuracy,3)*100,"%",sep=""))
+print(paste("The number of items correctly classified was        :",result$numcorrect))
+print(paste("The number of items incorrectly classified was      :",result$numwrong))
+print(paste("The number of items that couldn't be classified was :",result$unclassifiable))
+
+print("")
+result    = decision_tree$classify(train,tree,noanswer="ignore")
+print(paste("The accuracy on the test set from ",trainfile," was ",round(result$accuracy,3)*100,"%",sep=""))
 print(paste("The number of items correctly classified was        :",result$numcorrect))
 print(paste("The number of items incorrectly classified was      :",result$numwrong))
 print(paste("The number of items that couldn't be classified was :",result$unclassifiable))
