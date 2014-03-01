@@ -15,53 +15,85 @@ if(length(grep("linux",R.Version()$os)) ){
   windows <- function( ... ) X11( ... )
 }
 
-numbins = NULL #if this is NULL no binning will be done
+# SETTINGS
+numbins       = 5 #if this is NULL no binning will be done
+crossvalidate = TRUE
+folds         = 10
+printtree     = FALSE
 
 #Load the cancer data
-trainfile = "train.csv"; testfile  = "test.csv"; classlabel = "class"
-#trainfile = "fruit.csv" ;testfile  = "testFruit.csv"; classlabel = "Class"
+#trainfile = "train.csv"; testfile  = "test.csv"; classlabel = "class"
+trainfile = "fruit.csv" ;testfile  = "testFruit.csv"; classlabel = "Class"
 train     = set$csvtoset(read.csv(trainfile), classLabelName=classlabel)
 test      = set$csvtoset(read.csv(testfile), classLabelName=classlabel)
+full      = set$add(train,test)
+
+print("")
 
 if(!is.null(numbins)){
     result    = set$binsetdata(train, numbins=numbins)
     train     = result$newset
     test      = set$binsetdata(test, numbins=numbins, max=result$max, min=result$min)$newset
+    full      = set$binsetdata(full, numbins=numbins)$newset
 }
 
-print("building tree...")
-tree      = decision_tree$buildTree(train)
+if(!crossvalidate){
+    print("building tree...")
+    tree      = decision_tree$buildTree(train)
 
-print("tree hierarchy")
-decision_tree$print(tree,1,traversal="BFS")
+    if(printtree){
+        print("tree hierarchy")
+        decision_tree$print(tree,1,traversal="BFS")
+    }
+}
 
-print(paste("The tree used data put into",numbins,"bins"))
+if(!is.null(numbins)){
+    print(paste("The tree used data put into",numbins,"bins"))
+}
 
-result    = decision_tree$classify(test,tree,noanswer="vote")
-print(paste("The accuracy on the test set from ",testfile," was ",round(result$accuracy,3)*100,"%",sep=""))
-print(paste("The number of items correctly classified was        :",result$numcorrect))
-print(paste("The number of items incorrectly classified was      :",result$numwrong))
-print(paste("The number of items that couldn't be classified was :",result$unclassifiable))
+if(crossvalidate){
+    print(paste("building trees and doing",folds,"fold crossvaldiation with common class voting"))
+    print("")
+    result = decision_tree$crossvalidation(full,folds,noanswer="vote")
+    print(paste("The accuracy on the full set ",round(result$accuracy,3)*100,"%",sep=""))
+    print(paste("The number of items correctly classified was        :",result$numcorrect))
+    print(paste("The number of items incorrectly classified was      :",result$numwrong))
+    print(paste("The number of items that couldn't be classified was :",result$unclassifiable))
 
-print("")
-result    = decision_tree$classify(test,tree,noanswer="ignore")
-print(paste("The accuracy on the test set from ",testfile," was ",round(result$accuracy,3)*100,"%",sep=""))
-print(paste("The number of items correctly classified was        :",result$numcorrect))
-print(paste("The number of items incorrectly classified was      :",result$numwrong))
-print(paste("The number of items that couldn't be classified was :",result$unclassifiable))
-print("")
-print("")
-result    = decision_tree$classify(train,tree,noanswer="vote")
-print(paste("The accuracy on the test set from ",trainfile," was ",round(result$accuracy,3)*100,"%",sep=""))
-print(paste("The number of items correctly classified was        :",result$numcorrect))
-print(paste("The number of items incorrectly classified was      :",result$numwrong))
-print(paste("The number of items that couldn't be classified was :",result$unclassifiable))
-
-print("")
-result    = decision_tree$classify(train,tree,noanswer="ignore")
-print(paste("The accuracy on the test set from ",trainfile," was ",round(result$accuracy,3)*100,"%",sep=""))
-print(paste("The number of items correctly classified was        :",result$numcorrect))
-print(paste("The number of items incorrectly classified was      :",result$numwrong))
-print(paste("The number of items that couldn't be classified was :",result$unclassifiable))
+    print(paste("building trees and doing",folds,"fold crossvaldiation without common class voting"))
+    print("")
+    result = decision_tree$crossvalidation(full,folds,noanswer="ignore")
+    print(paste("The accuracy on the full set ",round(result$accuracy,3)*100,"%",sep=""))
+    print(paste("The number of items correctly classified was        :",result$numcorrect))
+    print(paste("The number of items incorrectly classified was      :",result$numwrong))
+    print(paste("The number of items that couldn't be classified was :",result$unclassifiable))
+} else {
+    result = decision_tree$classify(test,tree,noanswer="vote")
+    print(paste("The accuracy on the test set from ",testfile," was ",round(result$accuracy,3)*100,"%",sep=""))
+    print(paste("The number of items correctly classified was        :",result$numcorrect))
+    print(paste("The number of items incorrectly classified was      :",result$numwrong))
+    print(paste("The number of items that couldn't be classified was :",result$unclassifiable))
+    
+    print("")
+    result = decision_tree$classify(test,tree,noanswer="ignore")
+    print(paste("The accuracy on the test set from ",testfile," was ",round(result$accuracy,3)*100,"%",sep=""))
+    print(paste("The number of items correctly classified was        :",result$numcorrect))
+    print(paste("The number of items incorrectly classified was      :",result$numwrong))
+    print(paste("The number of items that couldn't be classified was :",result$unclassifiable))
+    print("")
+    print("")
+    result = decision_tree$classify(train,tree,noanswer="vote")
+    print(paste("The accuracy on the test set from ",trainfile," was ",round(result$accuracy,3)*100,"%",sep=""))
+    print(paste("The number of items correctly classified was        :",result$numcorrect))
+    print(paste("The number of items incorrectly classified was      :",result$numwrong))
+    print(paste("The number of items that couldn't be classified was :",result$unclassifiable))
+    
+    print("")
+    result = decision_tree$classify(train,tree,noanswer="ignore")
+    print(paste("The accuracy on the test set from ",trainfile," was ",round(result$accuracy,3)*100,"%",sep=""))
+    print(paste("The number of items correctly classified was        :",result$numcorrect))
+    print(paste("The number of items incorrectly classified was      :",result$numwrong))
+    print(paste("The number of items that couldn't be classified was :",result$unclassifiable))
+}
 
 #print(infogain(train,1))

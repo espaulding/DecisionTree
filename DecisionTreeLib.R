@@ -34,6 +34,12 @@ set$subset = function(localset, rowsToRemove=NULL, colsToRemove=NULL){
     return(ss)
 }
 
+set$add = function(lhs, rhs){
+    lhs$data = rbind(lhs$data,rhs$data)
+    lhs$class = c(lhs$class, rhs$class)
+    return(lhs)
+}
+
 #Discretize the data by some scale. i.e. on a scale from 1 to 10
 set$binsetdata = function(localset, numbins=10, max=NULL, min=NULL){
     result = list(max=max, min=min)
@@ -129,6 +135,40 @@ decision_tree$print_dfs = function(tree, prev, depth, layer){
             decision_tree$print_dfs(node,prev,depth,layer+1)
         }
     }
+}
+
+#use cross validation to get an average of result statistics
+decision_tree$crossvalidation = function(localset, folds, noanswer="vote"){
+    n       = nrow(localset$data)
+    all     = 1:n
+    t       = floor(n / folds)
+    permute = sample.int(n)
+    start   = 1
+    stop    = start + t
+    accuracy       = c()
+    numcorrect     = c()
+    numwrong       = c()
+    unclassifiable = c()
+
+    while(start < n){
+        if(stop > n){stop=n;}
+        #print(paste(start,stop))
+        testindex = permute[start:stop]
+        test   = set$subset(localset, rowsToRemove=all[-testindex])
+        train  = set$subset(localset, rowsToRemove=testindex)
+        tree   = decision_tree$buildTree(train)
+        result = decision_tree$classify(test,tree,noanswer=noanswer)
+        accuracy       = c(accuracy      ,result$accuracy)
+        numcorrect     = c(numcorrect    ,result$numcorrect)
+        numwrong       = c(numwrong      ,result$numwrong)
+        unclassifiable = c(unclassifiable,result$unclassifiable)
+
+        start = stop + 1
+        stop  = start + t
+    }
+    result = list(accuracy=mean(accuracy), numcorrect=sum(numcorrect),
+                  numwrong=sum(numwrong), unclassifiable=sum(unclassifiable))
+    return(result)
 }
 
 #Use a decision tree previously built to classify a set of test data
