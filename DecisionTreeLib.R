@@ -56,6 +56,81 @@ set$binsetdata = function(localset, numbins=10, max=NULL, min=NULL){
     return(result)
 }
 
+#the root is layer 0
+#print a decision tree object to the specified depth
+#using either Breadth First Search(BFS) or Depth First Search(DFS) to traverse the tree
+decision_tree$print = function(tree, depth, traversal="DFS"){
+    if(depth < 0){ print("invalid depth"); return(); }
+    if(!traversal=="BFS" && !traversal=="DFS"){ print("invalid traversal"); return();}
+    
+    if(traversal=="DFS"){
+        decision_tree$print_dfs(tree,NULL,depth,0)
+    }
+
+    if(traversal=="BFS"){
+        #print("BFS traversal not currently supported")
+        #return()
+
+        tree$prev = NULL
+        tree$layer = 0
+        queue = list()
+        queue[[1]] = tree
+        pindex = 1
+        eindex = 1
+        while(pindex <= eindex){
+            prevtext = ""
+            if(!is.null(queue[[pindex]]$prev)){
+                p = queue[[pindex]]$prev
+                prevtext = paste("The node coming from layer",p$layer,"label",p$label,"branch",p$branch)
+            }
+
+            #print out the current node
+            if(queue[[pindex]]$type == "leaf"){
+                print(paste(prevtext,"the leaf answers with class",queue[[pindex]]$answer))
+            } else {
+                print(paste(prevtext,"uses",queue[[pindex]]$label,"and asks"))
+                print(queue[[pindex]]$decision)
+                layer = queue[[pindex]]$layer
+                if(layer < depth){ #stop queing stuff past the layer specified by depth
+                    prev = list(layer=layer,label=queue[[pindex]]$label)
+                    for(branch in 1:length(queue[[pindex]]$decision)){
+                        eindex = eindex + 1 #move end pointer up 1
+                        prev$branch = tree$decision[[branch]]
+                        queue[[eindex]] = queue[[pindex]]$branch[[branch]]
+                        queue[[eindex]]$prev = prev
+                        queue[[eindex]]$layer = layer + 1
+                    }
+                }
+            }
+            pindex = pindex + 1 #move printing pointer up one
+        }
+    }
+    print("")
+}
+
+decision_tree$print_dfs = function(tree, prev, depth, layer){
+    if(layer > depth){ return(); }
+
+    prevtext = ""
+    if(!is.null(prev)){
+        prevtext = paste("The node coming from layer",prev$layer,"label",prev$label,"branch",prev$branch)
+    }
+
+    prev = list(layer=layer,label=tree$label)
+    if(tree$type == "leaf"){
+        print(paste(prevtext,"the leaf answers with class",tree$answer))
+    } else {
+        print(paste(prevtext,"uses",tree$label,"and asks"))
+        print(tree$decision)
+
+        for(branch in 1:length(tree$decision)){
+            prev$branch = tree$decision[[branch]]
+            node        = tree$branch[[branch]]
+            decision_tree$print_dfs(node,prev,depth,layer+1)
+        }
+    }
+}
+
 #Use a decision tree previously built to classify a set of test data
 #set       : Must be in the expected set format
 #set$data  : must contain a matrix of discrete values similiar to the values
