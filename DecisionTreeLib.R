@@ -74,44 +74,46 @@ decision_tree$print = function(tree, depth, traversal="DFS"){
     }
 
     if(traversal=="BFS"){
-        #print("BFS traversal not currently supported")
-        #return()
+        decision_tree$print_bfs(tree,depth)
+    }
 
-        tree$prev = NULL
-        tree$layer = 0
-        queue = list()
-        queue[[1]] = tree
-        pindex = 1
-        eindex = 1
-        while(pindex <= eindex){
-            prevtext = ""
-            if(!is.null(queue[[pindex]]$prev)){
-                p = queue[[pindex]]$prev
-                prevtext = paste("The node coming from layer",p$layer,"label",p$label,"branch",p$branch)
-            }
+    print("")
+}
 
-            #print out the current node
-            if(queue[[pindex]]$type == "leaf"){
-                print(paste(prevtext,"the leaf answers with class",queue[[pindex]]$answer))
-            } else {
-                print(paste(prevtext,"uses",queue[[pindex]]$label,"and asks"))
-                print(queue[[pindex]]$decision)
-                layer = queue[[pindex]]$layer
-                if(layer < depth){ #stop queing stuff past the layer specified by depth
-                    prev = list(layer=layer,label=queue[[pindex]]$label)
-                    for(branch in 1:length(queue[[pindex]]$decision)){
-                        eindex = eindex + 1 #move end pointer up 1
-                        prev$branch = tree$decision[[branch]]
-                        queue[[eindex]] = queue[[pindex]]$branch[[branch]]
-                        queue[[eindex]]$prev = prev
-                        queue[[eindex]]$layer = layer + 1
-                    }
+decision_tree$print_bfs = function(tree,depth){
+    tree$prev = NULL
+    tree$layer = 0
+    queue = list()
+    queue[[1]] = tree
+    pindex = 1
+    eindex = 1
+    while(pindex <= eindex){
+        prevtext = ""
+        if(!is.null(queue[[pindex]]$prev)){
+            p = queue[[pindex]]$prev
+            prevtext = paste("The node coming from layer",p$layer,"label",p$label,"branch",p$branch)
+        }
+
+        #print out the current node
+        if(queue[[pindex]]$type == "leaf"){
+            print(paste(prevtext,"the leaf answers with class",queue[[pindex]]$answer))
+        } else {
+            print(paste(prevtext,"uses",queue[[pindex]]$label,"and asks"))
+            print(queue[[pindex]]$decision)
+            layer = queue[[pindex]]$layer
+            if(layer < depth){ #stop queing stuff past the layer specified by depth
+                prev = list(layer=layer,label=queue[[pindex]]$label)
+                for(branch in 1:length(queue[[pindex]]$decision)){
+                    eindex = eindex + 1 #move end pointer up 1
+                    prev$branch = tree$decision[[branch]]
+                    queue[[eindex]] = queue[[pindex]]$branch[[branch]]
+                    queue[[eindex]]$prev = prev
+                    queue[[eindex]]$layer = layer + 1
                 }
             }
-            pindex = pindex + 1 #move printing pointer up one
         }
+        pindex = pindex + 1 #move printing pointer up one
     }
-    print("")
 }
 
 decision_tree$print_dfs = function(tree, prev, depth, layer){

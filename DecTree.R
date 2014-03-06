@@ -16,10 +16,13 @@ if(length(grep("linux",R.Version()$os)) ){
 }
 
 # SETTINGS
-numbins       = 5 #if this is NULL no binning will be done
-crossvalidate = TRUE
+numbins       = 2 #if this is NULL no binning will be done
+crossvalidate = FALSE
 folds         = 10
-printtree     = FALSE
+printtree     = TRUE
+printdepth    = 4
+#printmode     = "BFS"
+printmode     = "DFS"
 
 #Load the cancer data
 #trainfile = "train.csv"; testfile  = "test.csv"; classlabel = "class"
@@ -43,7 +46,7 @@ if(!crossvalidate){
 
     if(printtree){
         print("tree hierarchy")
-        decision_tree$print(tree,1,traversal="BFS")
+        decision_tree$print(tree,printdepth,traversal=printmode)
     }
 }
 
