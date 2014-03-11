@@ -6,11 +6,31 @@ set = list()
 #receive a table from read.csv and wrap the result in a conceptual set format
 #if a valid classLabelName is provided dataColumns and classLabelColumn will be superceded
 #classLabelName is case sensitive
-set$csvtoset = function(csvData, dataColumns=NULL, classLabelColumn=NULL, classLabelName=NULL){
-    newset = list()
+
+# Priority list for class labels information.
+#   if a vector of classLabels is provided it will always take the highest priority as long as 
+#   the length of the class labels vector is the same as the number of rows in the data
+#   otherwise the vector of class labels will be ignored
+#   
+#   Next if a class label name is provided and that name exists as a column header
+#   in the data that column of the data will be used as class labels and removed from the data
+#   if it was included in the data
+#
+#   next if a class label column is provided as a column index use that column as the
+#   class label vector
+#
+#TODO: should there be a check to ensure the class labels are not also viewed as data?
+#      or would there be a situation where that should be ok?
+set$csvtoset = function(csvData, classLabels=NULL, dataColumns=NULL, classLabelColumn=NULL, classLabelName=NULL){
+    newset = list(data=NULL,class=NULL)
     if(!is.null(dataColumns)){ newset$data=csvData[,dataColumns]; }
     if(!is.null(classLabelColumn)){ newset$class=csvData[,classLabelColumn]; }
+    if(!is.null(classLabels) && length(classLabels)==nrow(csvData)){ 
+        classLabelName = NULL
+        newset$class=classLabels; 
+    }
 
+    #if a class column name is given find its index and use it
     classLabelColumn = which(colnames(csvData) == classLabelName)
     if(length(classLabelColumn) == 1){ #length of 0 or more than 1 indicates an unuseable index
         dataColumns = 1:ncol(csvData)
@@ -18,6 +38,10 @@ set$csvtoset = function(csvData, dataColumns=NULL, classLabelColumn=NULL, classL
         newset$data=csvData[,dataColumns]
         newset$class=csvData[,classLabelColumn]
     }
+
+    #return null if the set does not have complete information at this point
+    if(is.null(newset$data) || is.null(newset$class)) { return(NULL); }
+
     return(newset)
 }
 
